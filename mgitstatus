@@ -14,6 +14,7 @@ Scan for .git dirs under DIR (up to DEPTH dirs deep) and show git status
   -w   Warn about dirs that are not Git repositories
   -e   Exclude repos that are 'ok'
   -f   Do a 'git fetch' on each repo (slow for many repos)
+  -m   Do a 'git fetch && git merge' on each repo (only for current branch)
   -c   Force color output (preserve colors when using pipes)
 
 You can limit output with the following options:
@@ -32,6 +33,7 @@ EOF
 WARN_NOT_REPO=0
 EXCLUDE_OK=0
 DO_FETCH=0
+DO_MERGE=0
 FORCE_COLOR=0
 NO_PUSH=0
 NO_PULL=0
@@ -56,6 +58,9 @@ while [ ! -z "$1" ]; do
     fi
     if [ "$1" = "-f" ]; then
         DO_FETCH=1
+    fi
+    if [ "$1" = "-m" ]; then
+        DO_MERGE=1
     fi
     if [ "$1" = "-c" ]; then
         FORCE_COLOR=1
@@ -143,8 +148,13 @@ do
     fi
 
     # Do a 'git fetch' if requested
-    if [ "$DO_FETCH" -eq 1 ]; then
+    if [ "$DO_FETCH" -eq 1 ] || [ "$DO_MERGE" -eq 1 ]; then
         git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" fetch -q >/dev/null
+    fi
+    
+    # Do a 'git merge', if requested
+    if [ "$DO_MERGE" -eq 1 ]; then
+        git --work-tree "$(dirname "$GIT_DIR")" --git-dir "$GIT_DIR" merge -q >/dev/null
     fi
 
     # Refresh the index, or we might get wrong results.
